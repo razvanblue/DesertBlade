@@ -4,7 +4,9 @@ Intermediate
 Saved
 Content/BlackAlder/**/Textures
 Content/Fab/**/Textures
+Content/IdaFaber/**/Textures
 Content/StarterContent/**/Textures
+.idea
 .vscode
 .vs
 *.VC.db
