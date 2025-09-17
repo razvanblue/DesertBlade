@@ -8,6 +8,7 @@
 #include "DesertBlade/DebugMacros.h"
 #include "DesertBlade/DesertBlade.h"
 #include "IO/IoStoreOnDemand.h"
+#include "NiagaraComponent.h"
 
 AItem::AItem()
 {
@@ -18,6 +19,9 @@ AItem::AItem()
 
 	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
 	Sphere->SetupAttachment(GetRootComponent());
+
+	ItemParticleSystem = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ParticleEffect"));
+	ItemParticleSystem->SetupAttachment(GetRootComponent());
 }
 
 void AItem::BeginPlay()

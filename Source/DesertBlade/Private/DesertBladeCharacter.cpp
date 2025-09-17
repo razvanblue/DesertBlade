@@ -7,6 +7,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "Camera/CameraComponent.h"
+#include "Components/BoxComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Items/Weapons/Weapon.h"
@@ -46,6 +47,11 @@ void ADesertBladeCharacter::BeginPlay()
 
 void ADesertBladeCharacter::MoveForward(float Value)
 {
+	if (ActionState != EActionState::Unoccupied)
+	{
+		return;
+	}
+	
 	if (Controller && Value != 0.f)
 	{
 	    const FRotator ControlRotation = GetControlRotation();
@@ -57,6 +63,11 @@ void ADesertBladeCharacter::MoveForward(float Value)
 
 void ADesertBladeCharacter::MoveRight(float Value)
 {
+	if (ActionState != EActionState::Unoccupied)
+	{
+		return;
+	}
+	
 	if (Controller && Value != 0.f)
 	{
 		const FRotator ControlRotation = GetControlRotation();
@@ -76,7 +87,7 @@ void ADesertBladeCharacter::LookUp(float Value)
 
 void ADesertBladeCharacter::Move(const FInputActionValue& Value)
 {
-	if (ActionState == EActionState::Attacking)
+	if (ActionState != EActionState::Unoccupied)
 	{
 		return;
 	}
@@ -110,9 +121,22 @@ void ADesertBladeCharacter::Interact()
 {
 	if (auto* Weapon = Cast<AWeapon>(OverlappingItem))
 	{
-		Weapon->Equip(GetMesh(), TEXT("hand_r_socket"));
-
+		Weapon->Equip(GetMesh(), TEXT("hand_r_socket"), this, this);
 		CharacterState = ECharacterState::Equipped1HWeapon;
+		OverlappingItem = nullptr;
+		EquippedWeapon = Weapon;
+	}
+	else if (CanDisarm())
+	{
+		PlayEquipMontage("Unequip");
+		CharacterState = ECharacterState::Unequipped;
+		ActionState = EActionState::Equipping;
+	}
+	else if (CanArm())
+	{
+		PlayEquipMontage("Equip");
+		CharacterState = ECharacterState::Equipped1HWeapon;
+		ActionState = EActionState::Equipping;
 	}
 }
 
@@ -152,9 +176,56 @@ void ADesertBladeCharacter::PlayAttackMontage()
 	}
 }
 
+void ADesertBladeCharacter::PlayEquipMontage(const FName& SectionName)
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (EquipMontage)
+	{
+		AnimInstance->Montage_Play(EquipMontage);
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
 void ADesertBladeCharacter::AttackEnd()
 {
 	ActionState = EActionState::Unoccupied;
+}
+
+bool ADesertBladeCharacter::CanDisarm()
+{
+	return ActionState == EActionState::Unoccupied && CharacterState != ECharacterState::Unequipped;
+}
+
+bool ADesertBladeCharacter::CanArm()
+{
+	return ActionState == EActionState::Unoccupied
+		&& CharacterState == ECharacterState::Unequipped
+		&& EquippedWeapon;
+}
+
+void ADesertBladeCharacter::Arm()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->AttachMeshToSocket(GetMesh(), TEXT("hand_r_socket"));
+	}
+}
+
+void ADesertBladeCharacter::Disarm()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->AttachMeshToSocket(GetMesh(), TEXT("back_socket"));
+	}
+}
+
+void ADesertBladeCharacter::SetHitboxCollision(ECollisionEnabled::Type CollisionEnabled)
+{
+	if (EquippedWeapon && EquippedWeapon->GetHitbox())
+	{
+		EquippedWeapon->IgnoreActors.Empty();
+		EquippedWeapon->GetHitbox()->SetCollisionEnabled((CollisionEnabled));
+	}
 }
 
 void ADesertBladeCharacter::Tick(float DeltaTime)
@@ -174,7 +245,7 @@ void ADesertBladeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ADesertBladeCharacter::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ADesertBladeCharacter::Look);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Triggered, this, &ADesertBladeCharacter::Interact);
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ADesertBladeCharacter::Interact);
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ADesertBladeCharacter::Attack);
 	}
 }

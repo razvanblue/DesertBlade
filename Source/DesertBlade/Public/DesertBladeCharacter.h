@@ -14,6 +14,7 @@ class UAnimMontage;
 class UInputAction;
 class UInputMappingContext;
 class AItem;
+class AWeapon;
 
 UCLASS()
 class DESERTBLADE_API ADesertBladeCharacter : public ACharacter
@@ -51,15 +52,30 @@ protected:
 	
 	void Attack();
 	
-	/**************************/
+	/************ Animation Delegates *************/
 
+	UFUNCTION(BlueprintCallable)
+	void AttackEnd();
+
+	UFUNCTION(BlueprintCallable)
+	void Arm();
+	
+	UFUNCTION(BlueprintCallable)
+	void Disarm();
+
+	UFUNCTION(BlueprintCallable)
+	void SetHitboxCollision(ECollisionEnabled::Type CollisionEnabled);
+	
 	/**
 	 * Play Attack Montage
 	 */
 	void PlayAttackMontage();
 
-	UFUNCTION(BlueprintCallable)
-	void AttackEnd();
+	void PlayEquipMontage(const FName& SectionName);
+	
+	bool CanDisarm();
+
+	bool CanArm();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> PlayerMappingContext;
@@ -88,11 +104,17 @@ protected:
 	UPROPERTY(VisibleInstanceOnly)
 	TObjectPtr<AItem> OverlappingItem;
 
+	UPROPERTY(VisibleAnywhere, Category = Weapon)
+	TObjectPtr<AWeapon> EquippedWeapon;
+
 	/**
 	 * Animation Montages
 	 */
 	UPROPERTY(EditAnywhere, Category = Montages)
 	TObjectPtr<UAnimMontage> AttackMontage;
+
+	UPROPERTY(EditAnywhere, Category = Montages)
+	TObjectPtr<UAnimMontage> EquipMontage;
 	
 	ECharacterState CharacterState = ECharacterState::Unequipped;
 	
