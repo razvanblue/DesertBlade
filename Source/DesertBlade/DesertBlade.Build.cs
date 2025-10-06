@@ -10,7 +10,9 @@ public class DesertBlade : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "MetasoundEngine", "Chaos", "GeometryCollectionEngine", "Niagara", "UMG" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "MetasoundEngine", "Chaos", "GeometryCollectionEngine", "Niagara" });
+		
+		PrivateDependencyModuleNames.AddRange(new string[] { "UMG", "AIModule" });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

@@ -3,10 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
 #include "CharacterTypes.h"
+#include "Characters/BaseCharacter.h"
 #include "DesertBladeCharacter.generated.h"
 
+enum class EWeaponType : uint8;
 class UCameraComponent;
 class USpringArmComponent;
 struct FInputActionValue;
@@ -14,10 +15,9 @@ class UAnimMontage;
 class UInputAction;
 class UInputMappingContext;
 class AItem;
-class AWeapon;
 
 UCLASS()
-class DESERTBLADE_API ADesertBladeCharacter : public ACharacter
+class DESERTBLADE_API ADesertBladeCharacter : public ABaseCharacter
 {
 	GENERATED_BODY()
 
@@ -47,30 +47,22 @@ protected:
 	void Move(const FInputActionValue& Value);
 
 	void Look(const FInputActionValue& Value);
-
+	
 	void Interact();
 	
-	void Attack();
+	virtual void Attack() override;
+	
+	void SelectWeaponMontage(AWeapon* Weapon);
 	
 	/************ Animation Delegates *************/
-
-	UFUNCTION(BlueprintCallable)
-	void AttackEnd();
+	virtual void AttackEnd() override;
 
 	UFUNCTION(BlueprintCallable)
 	void Arm();
 	
 	UFUNCTION(BlueprintCallable)
 	void Disarm();
-
-	UFUNCTION(BlueprintCallable)
-	void SetHitboxCollision(ECollisionEnabled::Type CollisionEnabled);
 	
-	/**
-	 * Play Attack Montage
-	 */
-	void PlayAttackMontage();
-
 	void PlayEquipMontage(const FName& SectionName);
 	
 	bool CanDisarm();
@@ -104,17 +96,23 @@ protected:
 	UPROPERTY(VisibleInstanceOnly)
 	TObjectPtr<AItem> OverlappingItem;
 
-	UPROPERTY(VisibleAnywhere, Category = Weapon)
-	TObjectPtr<AWeapon> EquippedWeapon;
-
 	/**
 	 * Animation Montages
 	 */
 	UPROPERTY(EditAnywhere, Category = Montages)
-	TObjectPtr<UAnimMontage> AttackMontage;
+	TObjectPtr<UAnimMontage> AttackMontage1H;
 
 	UPROPERTY(EditAnywhere, Category = Montages)
-	TObjectPtr<UAnimMontage> EquipMontage;
+	TObjectPtr<UAnimMontage> EquipMontage1H;
+
+	UPROPERTY(EditAnywhere, Category = Montages)
+	TObjectPtr<UAnimMontage> AttackMontage2H;
+
+	UPROPERTY(EditAnywhere, Category = Montages)
+	TObjectPtr<UAnimMontage> EquipMontage2H;
+
+	UPROPERTY(VisibleAnywhere, Category = Montages)
+	TObjectPtr<UAnimMontage> CurrentEquipMontage;
 	
 	ECharacterState CharacterState = ECharacterState::Unequipped;
 	

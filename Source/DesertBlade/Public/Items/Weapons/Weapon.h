@@ -4,10 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Items/Item.h"
+#include "CharacterTypes.h"
 #include "Weapon.generated.h"
 
 class UMetaSoundSource;
 class UBoxComponent;
+
+UENUM()
+enum class EWeaponType : uint8
+{
+	OneHanded UMETA(DisplayName = "One Handed"),
+	TwoHanded UMETA(DisplayName = "Two Handed")
+};
 
 /**
  * 
@@ -24,6 +32,9 @@ public:
 	void AttachMeshToSocket(USceneComponent* Parent, const FName& Socket);
 
 	void Equip(USceneComponent* Parent, const FName& Socket, AActor* NewOwner, APawn* NewInstigator);
+	
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	ECharacterState WeaponType = ECharacterState::Equipped1HWeapon;
 
 	TArray<AActor*> IgnoreActors;
 	
@@ -41,7 +52,7 @@ protected:
     void CreateFields(const FVector& FieldLocation);
 
 private:
-
+	
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties" )
 	TObjectPtr<UMetaSoundSource> EquipSound;
 

@@ -19,10 +19,19 @@ enum class EActionState : uint8
 UENUM(BlueprintType)
 enum class EDeathPose : uint8
 {
-	Alive UMETA(DisplayName = "Alive"), // Should always be first
-	// Add new values below
 	DeadRight UMETA(DisplayName = "Dead Right"),
 	DeadLeft UMETA(DisplayName = "Dead Left"),
 	DeadForward UMETA(DisplayName = "Dead Forward"),
 	DeadBack UMETA(DisplayName = "Dead Back")
+};
+
+
+UENUM(BlueprintType)
+enum class EEnemyState : uint8
+{
+	Dead UMETA(DisplayName = "Dead"),
+	Patrolling UMETA(DisplayName = "Patrolling"),
+	Chasing UMETA(DisplayName = "Chasing"),
+	Engaged UMETA(DisplayName = "Engaged"),
+	Attacking UMETA(DisplayName = "Attacking")
 };

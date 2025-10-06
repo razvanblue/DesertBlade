@@ -7,7 +7,6 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "Camera/CameraComponent.h"
-#include "Components/BoxComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Items/Weapons/Weapon.h"
@@ -36,6 +35,8 @@ void ADesertBladeCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	Tags.Add(FName("Player"));
+	
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
@@ -121,10 +122,15 @@ void ADesertBladeCharacter::Interact()
 {
 	if (auto* Weapon = Cast<AWeapon>(OverlappingItem))
 	{
+		if (EquippedWeapon)
+		{
+			EquippedWeapon->Destroy();
+		}
 		Weapon->Equip(GetMesh(), TEXT("hand_r_socket"), this, this);
-		CharacterState = ECharacterState::Equipped1HWeapon;
+		CharacterState = Weapon->WeaponType;
 		OverlappingItem = nullptr;
 		EquippedWeapon = Weapon;
+		SelectWeaponMontage(Weapon);
 	}
 	else if (CanDisarm())
 	{
@@ -135,53 +141,43 @@ void ADesertBladeCharacter::Interact()
 	else if (CanArm())
 	{
 		PlayEquipMontage("Equip");
-		CharacterState = ECharacterState::Equipped1HWeapon;
+		CharacterState = EquippedWeapon->WeaponType;
 		ActionState = EActionState::Equipping;
 	}
 }
 
 void ADesertBladeCharacter::Attack()
 {
-	if (CharacterState == ECharacterState::Equipped1HWeapon && ActionState == EActionState::Unoccupied)
+	if (CharacterState != ECharacterState::Unequipped && ActionState == EActionState::Unoccupied)
 	{
 		ActionState = EActionState::Attacking;
-		PlayAttackMontage();
+		PlayRandomMontageSection(AttackMontage);
 	}
 }
 
-void ADesertBladeCharacter::PlayAttackMontage()
+void ADesertBladeCharacter::SelectWeaponMontage(AWeapon* Weapon)
 {
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AttackMontage)
+	switch (Weapon->WeaponType)
 	{
-		AnimInstance->Montage_Play(AttackMontage);
-		
-		FName SectionName{};
-		int32 AttackIdx = FMath::RandRange(0, 2);
-		switch (AttackIdx)
-		{
-		case 0:
-			SectionName = FName(TEXT("Attack1"));
-			break;
-		case 1:
-			SectionName = FName(TEXT("Attack2"));
-			break;
-		case 2:
-			SectionName = FName(TEXT("Attack3"));
-			break;
-		default:
-			break;
-		}
-		AnimInstance->Montage_JumpToSection(SectionName);
+	case ECharacterState::Equipped1HWeapon:
+		AttackMontage = AttackMontage1H;
+		CurrentEquipMontage = EquipMontage1H;
+		break;
+	case ECharacterState::Equipped2HWeapon:
+		AttackMontage = AttackMontage2H;
+		CurrentEquipMontage = EquipMontage2H;
+		break;
+	default:
+		break;
 	}
 }
 
 void ADesertBladeCharacter::PlayEquipMontage(const FName& SectionName)
 {
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (EquipMontage)
+	if (CurrentEquipMontage)
 	{
-		AnimInstance->Montage_Play(EquipMontage);
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		AnimInstance->Montage_Play(CurrentEquipMontage);
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }
@@ -216,15 +212,6 @@ void ADesertBladeCharacter::Disarm()
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->AttachMeshToSocket(GetMesh(), TEXT("back_socket"));
-	}
-}
-
-void ADesertBladeCharacter::SetHitboxCollision(ECollisionEnabled::Type CollisionEnabled)
-{
-	if (EquippedWeapon && EquippedWeapon->GetHitbox())
-	{
-		EquippedWeapon->IgnoreActors.Empty();
-		EquippedWeapon->GetHitbox()->SetCollisionEnabled((CollisionEnabled));
 	}
 }
 
